@@ -1,18 +1,20 @@
 listen: :443
 
-tls:
-  acme:
-    domains:
-      - vpn.example.com
-    email: your@email.com
-    disable_http_challenge: true
+acme:
+  domains:
+    - vpn.example.com
+  email: your@email.com
+  disable_http_challenge: true
 
 auth:
-  type: file
-  file:
-    path: /etc/hysteria/users.yaml
+  type: userpass
+  userpass:
+    user1: pass1
+    user2: pass2
+    user3: pass3
 
 masquerade:
   type: proxy
   proxy:
-    url: https://www.cloudflare.com
+    url: https://www.xbox.com
+    rewriteHost: true

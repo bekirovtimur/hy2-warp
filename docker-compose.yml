@@ -8,15 +8,16 @@ services:
       - ./warp-data:/data
     entrypoint: >
       sh -c "
-      if [ ! -f /data/wgcf.conf ]; then
+      if [ ! -f /data/wg_confs/wg0.conf ]; then
         apk add --no-cache curl wget;
-        wget -O /usr/local/bin/wgcf https://github.com/ViRb3/wgcf/releases/latest/download/wgcf_amd64;
+        mkdir -p /data/wg_confs;
+        wget -O /usr/local/bin/wgcf https://github.com/ViRb3/wgcf/releases/download/v2.2.30/wgcf_2.2.30_linux_amd64;
         chmod +x /usr/local/bin/wgcf;
         cd /data;
         yes | wgcf register;
         wgcf generate;
-        mv wgcf-profile.conf wgcf.conf;
-        sed -i '/\\[Interface\\]/a Table = off' wgcf.conf;
+        mv wgcf-profile.conf wg_confs/wg0.conf;
+        sed -i '/\\[Interface\\]/a Table = off' wg_confs/wg0.conf;
         echo 'WARP config generated.';
       else
         echo 'WARP config already exists.';
