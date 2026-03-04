@@ -1,0 +1,55 @@
+version: "3.9"
+
+services:
+  warp-init:
+    image: alpine:3.19
+    container_name: warp-init
+    volumes:
+      - ./warp-data:/data
+    entrypoint: >
+      sh -c "
+      if [ ! -f /data/wgcf.conf ]; then
+        apk add --no-cache curl wget;
+        wget -O /usr/local/bin/wgcf https://github.com/ViRb3/wgcf/releases/latest/download/wgcf_amd64;
+        chmod +x /usr/local/bin/wgcf;
+        cd /data;
+        yes | wgcf register;
+        wgcf generate;
+        mv wgcf-profile.conf wgcf.conf;
+        sed -i '/\\[Interface\\]/a Table = off' wgcf.conf;
+        echo 'WARP config generated.';
+      else
+        echo 'WARP config already exists.';
+      fi
+      "
+    restart: "no"
+
+  warp:
+    image: ghcr.io/linuxserver/wireguard
+    container_name: warp
+    depends_on:
+      warp-init:
+        condition: service_completed_successfully
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    volumes:
+      - ./warp-data:/config
+      - /lib/modules:/lib/modules
+    ports:
+      - "443:443/tcp"
+      - "443:443/udp"
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+    restart: unless-stopped
+
+  hysteria:
+    image: tobyxdd/hysteria:latest
+    container_name: hysteria
+    network_mode: "service:warp"
+    depends_on:
+      - warp
+    volumes:
+      - ./hysteria:/etc/hysteria
+    command: server -c /etc/hysteria/config.yaml
+    restart: unless-stopped
